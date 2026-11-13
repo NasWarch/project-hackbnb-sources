@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from flask_cors import CORS
 from database.init import db
@@ -39,8 +41,11 @@ def welcome():
 
 
 if __name__ == '__main__':
+   # FIX D8 : debug desactive par defaut. Le debugger Werkzeug expose les
+   # traces, le code source et peut permettre l'execution de code.
+   # Pour le developpement uniquement : FLASK_DEBUG=1.
    app.run(
-      debug=True,
+      debug=os.getenv("FLASK_DEBUG", "0") == "1",
       host="0.0.0.0",
       port=9001,
    )
