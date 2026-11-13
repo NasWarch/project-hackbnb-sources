@@ -1,4 +1,6 @@
 import os
+from urllib.parse import quote
+
 import stripe
 import requests
 
@@ -29,7 +31,10 @@ def create_checkout(reference, name, unit_price, quantity, confirmation_secret):
     )
 
 def get_checkout_lines(checkout_session_id):
-    url = f"https://api.stripe.com/v1/checkout/sessions/{checkout_session_id}/line_items"
+    # FIX D3 : l'identifiant est encode avant d'etre place dans le chemin.
+    # Il ne peut plus contenir de '../' ni faire sortir de /v1/checkout/sessions/.
+    safe_session_id = quote(checkout_session_id, safe="")
+    url = f"https://api.stripe.com/v1/checkout/sessions/{safe_session_id}/line_items"
 
     session = requests.Session()
     session.auth = (os.getenv('STRIPE_API_KEY'), "")

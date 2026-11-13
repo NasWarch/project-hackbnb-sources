@@ -1,5 +1,5 @@
-import time
-import hashlib
+import re
+import secrets
 import string
 import random
 from datetime import date
@@ -12,6 +12,10 @@ from .bookings_models import Booking
 from sqlalchemy.orm import joinedload
 
 bookings_api = Blueprint('bookings', __name__)
+
+# FIX D3 : un identifiant de session Stripe est toujours de la forme cs_xxx.
+# Toute autre valeur (contenant '../', une URL, ...) est rejetee avant l'appel.
+CHECKOUT_SESSION_ID_PATTERN = re.compile(r"^cs_[A-Za-z0-9_]{10,120}$")
 
 
 @bookings_api.route('/<reference>', methods=['GET'])
@@ -40,10 +44,15 @@ def get_booking_checkout_lines(reference: str):
     if not booking.is_paid:
         return {'error': 'Cannot get checkout lines without payment'}, 422
 
+    checkout_session_id = request.args.get("checkout_session_id", "")
+
+    # FIX D3 : validation stricte du parametre avant tout appel sortant
+    if not CHECKOUT_SESSION_ID_PATTERN.match(checkout_session_id):
+        return {'error': 'Invalid checkout session ID'}, 400
+
     try:
-        checkout_session_id = request.args.get("checkout_session_id")
         return jsonify(get_checkout_lines(checkout_session_id))
-    except:
+    except Exception:
         return {'error': 'Invalid checkout session ID'}, 404
 
 
@@ -90,9 +99,10 @@ def new_booking():
     # Generate random booking reference
     booking_reference = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(8))
 
-    # Generate random confirmation secret
-    random_string = str(int(time.time())) # get current timestamp in seconds
-    checkout_confirmation_secret = hashlib.sha512(random_string.encode('utf-8')).hexdigest() # hash it with safe sha512
+    # FIX D4 : secret aleatoire imprevisible (256 bits) genere par le module
+    # secrets. L'ancienne version utilisait sha512(int(time.time())) : seules
+    # quelques centaines de valeurs etaient possibles, donc brute-forcable.
+    checkout_confirmation_secret = secrets.token_urlsafe(32)
 
     # Create Stripe checkout session
     checkout_session = create_checkout(
