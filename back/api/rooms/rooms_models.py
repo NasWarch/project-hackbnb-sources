@@ -32,6 +32,7 @@ class Room(db.Model):
         }
 
         if self.host_user:
-            output["host"] = self.host_user.to_dict()
+            # FIX D5 : on n'expose pas l'e-mail de l'hote dans une API publique
+            output["host"] = self.host_user.to_public_dict()
 
         return output

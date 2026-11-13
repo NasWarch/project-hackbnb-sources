@@ -16,10 +16,18 @@ class User(db.Model):
         return f'<User {self.email!r}>'
     
     def to_dict(self):
+        """Representation complete : reservee a l'utilisateur lui-meme."""
         return {
             "id": self.id,
             "name": self.name,
             "email": self.email,
+        }
+
+    def to_public_dict(self):
+        """FIX D5 : representation publique, sans adresse e-mail."""
+        return {
+            "id": self.id,
+            "name": self.name,
         }
 
     def set_password(self, clear_password: str):
