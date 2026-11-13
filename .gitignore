@@ -1,0 +1,13 @@
+# Secrets : ne jamais versionner les cles d'API (FIX D6)
+.env
+.env.*
+!.env.example
+
+# Base de donnees locale
+*.sqlite
+*.db
+
+# Divers
+.DS_Store
+__pycache__/
+*.pyc
